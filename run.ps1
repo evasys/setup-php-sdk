@@ -47,7 +47,7 @@ Write-Output "Install PHP SDK ..."
 
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
 $url = "https://github.com/php/php-sdk-binary-tools/archive/refs/heads/master.zip"
-Invoke-WebRequest $url -OutFile $temp
+Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $temp
 Expand-Archive $temp -DestinationPath "."
 Rename-Item "php-sdk-binary-tools-master" "php-sdk"
 
@@ -62,12 +62,12 @@ $phpversion = $releases.$version
 if (-not $phpversion) {
     $baseurl = "https://windows.php.net/downloads/releases"
     $url = "$baseurl/releases.json"
-    $releases = Invoke-WebRequest $url | ConvertFrom-Json
+    $releases = Invoke-WebRequest -Uri $url -UseBasicParsing | ConvertFrom-Json
     $phpversion = $releases.$version.version
     if (-not $phpversion) {
         $baseurl = "https://windows.php.net/downloads/qa"
         $url = "$baseurl/releases.json"
-        $releases = Invoke-WebRequest $url | ConvertFrom-Json
+        $releases = Invoke-WebRequest -Uri $url -UseBasicParsing | ConvertFrom-Json
         $phpversion = $releases.$version.version
         if (-not $phpversion) {
             throw "unknown version"
@@ -82,7 +82,7 @@ Write-Output "Install PHP $phpversion ..."
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
 $fname = "php-$phpversion-$tspart-$vs-$arch.zip"
 $url = "$baseurl/$fname"
-Invoke-WebRequest $url -OutFile $temp
+Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $temp
 Expand-Archive $temp "php-bin"
 
 Write-Output "Install development pack ..."
@@ -90,13 +90,13 @@ Write-Output "Install development pack ..."
 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
 $fname = "php-devel-pack-$phpversion-$tspart-$vs-$arch.zip"
 $url = "$baseurl/$fname"
-Invoke-WebRequest $url -OutFile $temp
+Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $temp
 Expand-Archive $temp "."
 Rename-Item "php-$phpversion-devel-$vs-$arch" "php-dev"
 
 if ($deps.Count -gt 0) {
     $baseurl = "https://windows.php.net/downloads/php-sdk/deps"
-    $series = Invoke-WebRequest "$baseurl/series/packages-$version-$vs-$arch-staging.txt"
+    $series = Invoke-WebRequest -Uri "$baseurl/series/packages-$version-$vs-$arch-staging.txt" -UseBasicParsing
     $remainder = @()
     $installed = $false
     foreach ($dep in $deps) {
@@ -104,7 +104,7 @@ if ($deps.Count -gt 0) {
             if ($line -match "^$dep") {
                 Write-Output "Install $line"
                 $temp = New-TemporaryFile | Rename-Item -NewName {$_.Name + ".zip"} -PassThru
-                Invoke-WebRequest "$baseurl/$vs/$arch/$line" -OutFile $temp
+                Invoke-WebRequest -Uri "$baseurl/$vs/$arch/$line" -UseBasicParsing -OutFile $temp
                 Expand-Archive $temp "../deps"
                 $installed = $true
                 break
